@@ -33,7 +33,7 @@ export default function Home() {
       <Form onSubmit={handleSubmit}>
         <FileInput
           type="file"
-          accept="text/html,.txt,.csv"
+          accept="text/html,.txt,.csv,.pdf,.doc,.docx"
           ref={input}
           onChange={handleChange}
         />

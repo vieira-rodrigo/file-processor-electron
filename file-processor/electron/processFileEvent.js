@@ -1,8 +1,12 @@
 const { ipcMain } = require("electron");
-const fs = require("fs");
+const textract = require("textract");
 
 ipcMain.on("PROCESS_FILE", (event, filePath) => {
-  event.reply("PROCESS_FILE", process(getWords(filePath)));
+  getWords(filePath)
+    .then((words) => event.reply("PROCESS_FILE", process(words)))
+    .catch((error) =>
+      console.error(`Was not possible to process the file due error: ${error}`)
+    );
 });
 
 const process = (words) => {
@@ -14,18 +18,23 @@ const process = (words) => {
 };
 
 const getWords = (path) => {
-  return fs
-    .readFileSync(path)
-    .toString("utf-8")
-    .replace(/(?:\r\n|\r|\n)/g, " ")
-    .replace(/[-,?=!.'"%$~}{/:)(><]/g, " ")
-    .replace(/[0-9]/g, "")
-    .replace("[", "")
-    .replace("]", "")
-    .trim()
-    .toLowerCase()
-    .split(" ")
-    .filter(filter);
+  return new Promise((resolve, reject) => {
+    textract.fromFileWithPath(path, (error, text) => {
+      if (error !== null) reject(error);
+
+      let words = text
+        .replace(/[-,?=!.'"%$~}{/:)(><]/g, " ")
+        .replace(/[0-9]/g, "")
+        .replace("[", "")
+        .replace("]", "")
+        .trim()
+        .toLowerCase()
+        .split(" ")
+        .filter(filter);
+
+      resolve(words);
+    });
+  });
 };
 
 const filter = (value) => {
